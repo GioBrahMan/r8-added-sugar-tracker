@@ -552,4 +552,558 @@
     render();
   </script>
 </body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>R8 Added Sugar Tracker</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f4f7fb;
+      color: #1f2937;
+    }
+    .wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    .grid {
+      display: grid;
+      gap: 20px;
+    }
+    .top-grid {
+      grid-template-columns: 2fr 1fr;
+    }
+    .main-grid {
+      grid-template-columns: 1.1fr 0.9fr;
+    }
+    .card {
+      background: white;
+      border-radius: 22px;
+      padding: 22px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+    }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { font-size: 2.2rem; margin-bottom: 8px; }
+    h2 { font-size: 1.5rem; margin-bottom: 8px; }
+    .muted { color: #6b7280; }
+    .badges { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+    .badge {
+      background: #e5e7eb;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-top: 18px;
+    }
+    .stat, .mini {
+      background: #f3f4f6;
+      border-radius: 18px;
+      padding: 16px;
+    }
+    .stat-label, .mini-label {
+      color: #6b7280;
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+    }
+    .stat-value, .mini-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+    label {
+      display: block;
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    input, textarea, button {
+      width: 100%;
+      font: inherit;
+    }
+    input, textarea {
+      border: 1px solid #d1d5db;
+      border-radius: 14px;
+      padding: 12px 14px;
+      background: white;
+    }
+    textarea { min-height: 120px; resize: vertical; }
+    .row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .progress-shell {
+      width: 100%;
+      height: 14px;
+      background: #e5e7eb;
+      border-radius: 999px;
+      overflow: hidden;
+      margin: 10px 0 8px;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: #111827;
+      transition: width 0.2s ease;
+    }
+    .btn-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+    .btn {
+      width: auto;
+      border: none;
+      border-radius: 14px;
+      padding: 12px 18px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .btn-primary { background: #111827; color: white; }
+    .btn-secondary { background: #e5e7eb; color: #111827; }
+    .entry-list {
+      max-height: 560px;
+      overflow: auto;
+      display: grid;
+      gap: 12px;
+    }
+    .entry {
+      border: 1px solid #e5e7eb;
+      border-radius: 18px;
+      padding: 16px;
+      background: white;
+      cursor: pointer;
+    }
+    .entry-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .entry-badge {
+      display: inline-block;
+      margin-top: 6px;
+      background: #e5e7eb;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+    .entry-notes {
+      color: #6b7280;
+      margin-top: 10px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+    }
+    .delete-btn {
+      width: auto;
+      background: transparent;
+      border: none;
+      font-size: 1.1rem;
+      cursor: pointer;
+    }
+    .empty, .soft-box {
+      background: #f3f4f6;
+      border-radius: 18px;
+      padding: 16px;
+    }
+    @media (max-width: 900px) {
+      .top-grid, .main-grid, .stats, .row-2 { grid-template-columns: 1fr; }
+      h1 { font-size: 1.8rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="grid top-grid">
+      <section class="card">
+        <div class="badges">
+          <div class="badge">Discipline experiment</div>
+          <div class="badge">8g added sugar max</div>
+        </div>
+        <h1>R8 Added Sugar Tracker</h1>
+        <p class="muted">A simple daily check-in to test your theory: stay at or under 8 grams of added sugar, stack discipline, and see where life takes you.</p>
+
+        <div class="stats">
+          <div class="stat">
+            <div class="stat-label">Daily target</div>
+            <div class="stat-value" id="dailyTarget">8g</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Current streak</div>
+            <div class="stat-value" id="currentStreak">0 days</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Best streak</div>
+            <div class="stat-value" id="bestStreak">0 days</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Success rate</div>
+            <div class="stat-value" id="successRate">0%</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Mission note</h2>
+        <p class="muted">Keep the reason visible so the habit feels bigger than one day.</p>
+        <textarea id="whyInput">Stay at 8g added sugar or less and see what discipline does for my life.</textarea>
+        <div class="soft-box" style="margin-top: 12px;">
+          Tiny joke, real principle: less impulse, more control. Whether or not it leads to an Audi R8, discipline compounds.
+        </div>
+      </section>
+    </div>
+
+    <div class="grid main-grid" style="margin-top: 20px;">
+      <section class="card">
+        <h2>Daily check-in</h2>
+        <p class="muted">Enter your added sugar for the day and any notes that matter.</p>
+
+        <div class="row-2">
+          <div>
+            <label for="dateInput">Date</label>
+            <input type="date" id="dateInput" />
+          </div>
+          <div>
+            <label for="sugarInput">Added sugar (grams)</label>
+            <input type="number" min="0" step="0.1" id="sugarInput" placeholder="0" />
+          </div>
+        </div>
+
+        <div style="margin-top: 18px;">
+          <div style="display:flex;justify-content:space-between;gap:12px;font-size:0.95rem;">
+            <span>Today’s target progress</span>
+            <span><span id="progressSugar">0</span>g / 8g</span>
+          </div>
+          <div class="progress-shell">
+            <div class="progress-bar" id="progressBar"></div>
+          </div>
+          <p class="muted" id="progressText">No amount entered yet.</p>
+        </div>
+
+        <div style="margin-top: 18px;">
+          <label for="notesInput">Notes</label>
+          <textarea id="notesInput" placeholder="Anything you noticed today about mood, cravings, focus, money, discipline..."></textarea>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" id="saveBtn">Save check-in</button>
+          <button class="btn btn-secondary" id="resetBtn" type="button">Reset form</button>
+        </div>
+      </section>
+
+      <div class="grid">
+        <section class="card">
+          <h2>Dashboard</h2>
+          <p class="muted">Your trend at a glance.</p>
+
+          <div class="soft-box">
+            <div class="mini-label">Today</div>
+            <div class="mini-value" id="todayStatus">No check-in yet</div>
+            <p class="muted" id="todaySubtext" style="margin-bottom:0;margin-top:8px;">Log today when you're ready.</p>
+          </div>
+
+          <div class="row-2" style="margin-top: 14px;">
+            <div class="mini">
+              <div class="mini-label">Average daily sugar</div>
+              <div class="mini-value" id="avgSugar">0g</div>
+            </div>
+            <div class="mini">
+              <div class="mini-label">Total check-ins</div>
+              <div class="mini-value" id="totalCheckins">0</div>
+            </div>
+          </div>
+
+          <div class="soft-box" style="margin-top: 14px;">
+            Consistency matters more than perfection. The goal is not one heroic day. The goal is a system.
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Past check-ins</h2>
+          <p class="muted">Click any entry to load it back into the form.</p>
+          <div class="entry-list" id="entryList"></div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'r8_sugar_tracker_simple_v1';
+    const DAILY_GOAL = 8;
+
+    const todayString = () => {
+      const d = new Date();
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
+    const formatPrettyDate = (dateStr) => {
+      const d = new Date(`${dateStr}T12:00:00`);
+      return d.toLocaleDateString(undefined, {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      });
+    };
+
+    const getInitialData = () => ({
+      entries: [],
+      why: 'Stay at 8g added sugar or less and see what discipline does for my life.'
+    });
+
+    let data = loadData();
+
+    const els = {
+      whyInput: document.getElementById('whyInput'),
+      dateInput: document.getElementById('dateInput'),
+      sugarInput: document.getElementById('sugarInput'),
+      notesInput: document.getElementById('notesInput'),
+      saveBtn: document.getElementById('saveBtn'),
+      resetBtn: document.getElementById('resetBtn'),
+      entryList: document.getElementById('entryList'),
+      currentStreak: document.getElementById('currentStreak'),
+      bestStreak: document.getElementById('bestStreak'),
+      successRate: document.getElementById('successRate'),
+      avgSugar: document.getElementById('avgSugar'),
+      totalCheckins: document.getElementById('totalCheckins'),
+      todayStatus: document.getElementById('todayStatus'),
+      todaySubtext: document.getElementById('todaySubtext'),
+      progressBar: document.getElementById('progressBar'),
+      progressSugar: document.getElementById('progressSugar'),
+      progressText: document.getElementById('progressText'),
+    };
+
+    function loadData() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? { ...getInitialData(), ...JSON.parse(raw) } : getInitialData();
+      } catch {
+        return getInitialData();
+      }
+    }
+
+    function saveData() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    function getTodayEntry() {
+      return data.entries.find(e => e.date === todayString());
+    }
+
+    function calcCurrentStreak() {
+      const successDates = data.entries
+        .filter(e => Number(e.addedSugar) <= DAILY_GOAL)
+        .map(e => e.date)
+        .sort((a, b) => (a < b ? 1 : -1));
+
+      if (!successDates.length) return 0;
+
+      let streak = 0;
+      const current = new Date();
+      current.setHours(12, 0, 0, 0);
+
+      if (!successDates.includes(todayString())) {
+        current.setDate(current.getDate() - 1);
+      }
+
+      while (true) {
+        const check = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}-${String(current.getDate()).padStart(2, '0')}`;
+        if (successDates.includes(check)) {
+          streak += 1;
+          current.setDate(current.getDate() - 1);
+        } else {
+          break;
+        }
+      }
+
+      return streak;
+    }
+
+    function calcBestStreak() {
+      const successful = [...new Set(data.entries.filter(e => Number(e.addedSugar) <= DAILY_GOAL).map(e => e.date))].sort();
+      if (!successful.length) return 0;
+
+      let best = 1;
+      let current = 1;
+
+      for (let i = 1; i < successful.length; i++) {
+        const prev = new Date(`${successful[i - 1]}T12:00:00`);
+        const cur = new Date(`${successful[i]}T12:00:00`);
+        const diff = Math.round((cur - prev) / (1000 * 60 * 60 * 24));
+
+        if (diff === 1) {
+          current += 1;
+          best = Math.max(best, current);
+        } else {
+          current = 1;
+        }
+      }
+
+      return best;
+    }
+
+    function resetForm() {
+      els.dateInput.value = todayString();
+      els.sugarInput.value = '';
+      els.notesInput.value = '';
+      updateProgress();
+    }
+
+    function loadEntryIntoForm(entry) {
+      els.dateInput.value = entry.date;
+      els.sugarInput.value = entry.addedSugar;
+      els.notesInput.value = entry.notes || '';
+      updateProgress();
+    }
+
+    function deleteEntry(date) {
+      data.entries = data.entries.filter(e => e.date !== date);
+      saveData();
+      if (els.dateInput.value === date) resetForm();
+      render();
+    }
+
+    function updateProgress() {
+      const sugar = els.sugarInput.value === '' ? 0 : Number(els.sugarInput.value);
+      const percent = Math.min(100, Math.round((sugar / DAILY_GOAL) * 100));
+      els.progressBar.style.width = `${percent}%`;
+      els.progressSugar.textContent = sugar;
+
+      if (els.sugarInput.value === '') {
+        els.progressText.textContent = 'No amount entered yet.';
+      } else if (sugar <= DAILY_GOAL) {
+        els.progressText.textContent = 'On target. Keep it clean today.';
+      } else {
+        els.progressText.textContent = 'Over target. Log it honestly and bounce back tomorrow.';
+      }
+    }
+
+    function renderEntries() {
+      const sorted = [...data.entries].sort((a, b) => (a.date < b.date ? 1 : -1));
+      els.entryList.innerHTML = '';
+
+      if (!sorted.length) {
+        els.entryList.innerHTML = '<div class="empty">No entries yet. Your first clean day starts the board.</div>';
+        return;
+      }
+
+      sorted.forEach(entry => {
+        const success = Number(entry.addedSugar) <= DAILY_GOAL;
+        const div = document.createElement('div');
+        div.className = 'entry';
+        div.innerHTML = `
+          <div class="entry-top">
+            <div>
+              <strong>${formatPrettyDate(entry.date)}</strong><br>
+              <span class="entry-badge">${success ? 'Goal hit' : 'Over'}</span>
+              <p style="margin:10px 0 0 0;">Added sugar: ${entry.addedSugar}g</p>
+              ${entry.notes ? `<div class="entry-notes">${escapeHtml(entry.notes)}</div>` : ''}
+            </div>
+            <button class="delete-btn" title="Delete">🗑️</button>
+          </div>
+        `;
+
+        div.addEventListener('click', () => loadEntryIntoForm(entry));
+        div.querySelector('.delete-btn').addEventListener('click', (e) => {
+          e.stopPropagation();
+          deleteEntry(entry.date);
+        });
+        els.entryList.appendChild(div);
+      });
+    }
+
+    function renderDashboard() {
+      const total = data.entries.length;
+      const wins = data.entries.filter(e => Number(e.addedSugar) <= DAILY_GOAL).length;
+      const avg = total ? (data.entries.reduce((sum, e) => sum + Number(e.addedSugar), 0) / total).toFixed(1) : '0';
+      const today = getTodayEntry();
+
+      els.currentStreak.textContent = `${calcCurrentStreak()} days`;
+      els.bestStreak.textContent = `${calcBestStreak()} days`;
+      els.successRate.textContent = `${total ? Math.round((wins / total) * 100) : 0}%`;
+      els.avgSugar.textContent = `${avg}g`;
+      els.totalCheckins.textContent = total;
+
+      if (!today) {
+        els.todayStatus.textContent = 'No check-in yet';
+        els.todaySubtext.textContent = "Log today when you're ready.";
+      } else {
+        els.todayStatus.textContent = `${today.addedSugar}g added sugar`;
+        els.todaySubtext.textContent = Number(today.addedSugar) <= DAILY_GOAL
+          ? 'You hit the goal today.'
+          : 'You went over today. Tomorrow is still yours.';
+      }
+    }
+
+    function render() {
+      els.whyInput.value = data.why || '';
+      renderEntries();
+      renderDashboard();
+      updateProgress();
+    }
+
+    function escapeHtml(str) {
+      return str
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    els.whyInput.addEventListener('input', () => {
+      data.why = els.whyInput.value;
+      saveData();
+    });
+
+    els.sugarInput.addEventListener('input', updateProgress);
+    els.resetBtn.addEventListener('click', resetForm);
+
+    els.saveBtn.addEventListener('click', () => {
+      const date = els.dateInput.value;
+      const sugar = els.sugarInput.value;
+      const notes = els.notesInput.value.trim();
+
+      if (!date) return;
+      if (sugar === '' || Number.isNaN(Number(sugar)) || Number(sugar) < 0) {
+        alert('Please enter a valid added sugar amount.');
+        return;
+      }
+
+      const newEntry = {
+        date,
+        addedSugar: Number(sugar),
+        notes,
+        createdAt: new Date().toISOString(),
+      };
+
+      const existingIndex = data.entries.findIndex(e => e.date === date);
+      if (existingIndex >= 0) {
+        data.entries[existingIndex] = newEntry;
+      } else {
+        data.entries.push(newEntry);
+      }
+
+      saveData();
+      render();
+    });
+
+    resetForm();
+    render();
+  </script>
+</body>
 </html>
